@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "C:\\Users\\zuhri\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages",
+        "C:\\Users\\zuhri\\AppData\\Local\\Programs\\Python\\Python311\\Lib",
+        "./SDK"
+    ]
+}
