@@ -27,10 +27,26 @@ elif sys.platform.startswith("darwin"):
 else:
     dwf = cdll.LoadLibrary("libdwf.so")
 
+print("####################### Log Data with Edge Trigger Type #####################")
+
 try:
     level_trigger_choosed = float(input("Insert the desired trigger level in Volt (float number):  "))
 
 except ValueError:
+    print("Invalid Value, Exit")
+    sys.exit(1)
+
+try:
+    slopetype = int(input("Insert the desired slope type: \n \
+                          0 - Rising Event \n \
+                          1 - Falling Event \n \
+                          2 - Either \n \
+                          Value Choosed (0-2):  "))
+except ValueError:
+    print("Invalid Value, Exit")
+    sys.exit(1)
+
+if slopetype > 2 or slopetype < 0:
     print("Invalid Value, Exit")
     sys.exit(1)
 
@@ -91,8 +107,9 @@ dwf.FDwfAnalogInTriggerAutoTimeoutSet(hdwf, c_double(0)) #disable auto trigger
 dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcDetectorAnalogIn) #one of the analog in channels
 dwf.FDwfAnalogInTriggerTypeSet(hdwf, trigtypeEdge)
 dwf.FDwfAnalogInTriggerChannelSet(hdwf, c_int(0)) # first channel
-dwf.FDwfAnalogInTriggerLevelSet(hdwf, c_double(level_trigger_choosed)) # 2.5V
-dwf.FDwfAnalogInTriggerConditionSet(hdwf, DwfTriggerSlopeRise) 
+dwf.FDwfAnalogInTriggerLevelSet(hdwf, c_double(level_trigger_choosed))
+# dwf.FDwfAnalogInTriggerConditionSet(hdwf, DwfTriggerSlopeRise) 
+dwf.FDwfAnalogInTriggerConditionSet(hdwf, c_int(slopetype)) 
 
 #or use trigger from other instruments or external trigger
 #dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcExternal1) 
@@ -108,7 +125,7 @@ file_name = str(datetime.now(tz_JKT))[:19] + " batt_log.csv"
 print("creating file...")
 f = open('./data/' + (file_name).replace(":", "_"), 'w', newline='')
 
-print("file created with name " + file_name + "at ./data folder")
+print("file created with name " + file_name + " at ./data folder")
 # create the csv writer
 writer = csv.writer(f)
 
@@ -145,7 +162,7 @@ while True:
 
         writer.writerow(data_array)
 
-        print("Acquisition at "+str(meas_time)+" average: "+ str(dc) +"V")
+        print("Acq at "+str(meas_time)+" average: "+ str(dc) +"V")
 
     except KeyboardInterrupt:
         break
