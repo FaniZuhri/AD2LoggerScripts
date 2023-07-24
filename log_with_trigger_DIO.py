@@ -169,10 +169,10 @@ print("Starting repeated acquisitions")
 dwf.FDwfAnalogInConfigure(hdwf, c_bool(False), c_bool(True))
 
 # enable output/mask on 8 LSB IO pins, from DIO 0 to 7
-dwf.FDwfDigitalIOOutputEnableSet(hdwf, c_int(0xFF))
+# dwf.FDwfDigitalIOOutputEnableSet(hdwf, c_int(0xFF))
 
 # set value on enabled IO pins
-dwf.FDwfDigitalIOOutputSet(hdwf, c_int(0x0))
+# dwf.FDwfDigitalIOOutputSet(hdwf, c_int(0x0))
 
 while True:
     try:
