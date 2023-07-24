@@ -15,6 +15,7 @@ import time
 import sys
 import csv
 import pytz
+from termcolor import colored
 
 ########################## VAR DECLARATIONS ############################
 
@@ -89,8 +90,9 @@ if slopetype > 1 or slopetype < 0:
     print("Invalid Value, Exit")
     sys.exit(1)
 
-print("DIO pin " + str(dio_used) + " is selected with " + \
-      ("rising" if slopetype == 1 else "falling") + " event.")
+print(colored("DIO pin " + str(dio_used) + " is selected with " + \
+      ("falling" if slopetype == 1 else "rising") + " event.", \
+        "green", "on_white"))
 
 #####################################################################
 
@@ -126,7 +128,7 @@ file_name = str(init_time)[:19] + " batt_log.csv"
 print("creating file...")
 f = open('./data/' + (file_name).replace(":", "_"), 'w', newline='')
 
-print("file created with name " + file_name + " at ./data folder")
+print(colored("file created with name " + file_name + " at ./data folder", "green", "on_white"))
 # create the csv writer
 writer = csv.writer(f)
 
@@ -135,7 +137,7 @@ writer = csv.writer(f)
 def power_off_device():
     # close the file
     f.close()
-    print("Log saved with name " + file_name + " at ./data folder")
+    print(colored("Log saved with name " + file_name + " at ./data folder", "green", "on_white"))
     dwf.FDwfAnalogOutConfigure(hdwf, c_int(0), c_bool(False))
     dwf.FDwfDeviceCloseAll()
 
@@ -174,14 +176,18 @@ while True:
         while True:
             # fetch digital IO information from the device 
             dwf.FDwfDigitalIOStatus(hdwf) 
+
             # read state of all pins, regardless of output enable
             dwf.FDwfDigitalIOInputStatus(hdwf, byref(dwRead))
 
             if slopetype == 0: # rising event
+
                 # start logging if pin input is high
                 if dwRead.value & pin_masking_bit == 1:
                     break
+
             else: # falling event
+                
                 # start logging if pin input is low
                 if dwRead.value & pin_masking_bit == 0:
                     break
