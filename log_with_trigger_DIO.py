@@ -90,7 +90,7 @@ if slopetype > 1 or slopetype < 0:
     sys.exit(1)
 
 print("DIO pin " + str(dio_used) + " is selected with " + \
-      "rising" if slopetype == 1 else "falling" + " event.")
+      ("rising" if slopetype == 1 else "falling") + " event.")
 
 #####################################################################
 
@@ -112,6 +112,25 @@ dwf.FDwfAnalogInChannelRangeSet(hdwf, c_int(1), c_double(5))
 dwf.FDwfAnalogInChannelAttenuationSet(hdwf, c_int(1), c_double(10))
 
 ######################################################################
+
+
+############################# FILE CONFIG ##############################
+
+tz_JKT = pytz.timezone('Asia/Jakarta')
+
+init_time = datetime.now(tz_JKT)
+
+file_name = str(init_time)[:19] + " batt_log.csv"
+
+# open the file in the write mode
+print("creating file...")
+f = open('./data/' + (file_name).replace(":", "_"), 'w', newline='')
+
+print("file created with name " + file_name + " at ./data folder")
+# create the csv writer
+writer = csv.writer(f)
+
+#######################################################################
 
 def power_off_device():
     # close the file
@@ -140,24 +159,6 @@ def start_logging():
 
     writer.writerow(data_array)
     time.sleep(0.5)
-
-############################# FILE CONFIG ##############################
-
-tz_JKT = pytz.timezone('Asia/Jakarta')
-
-init_time = datetime.now(tz_JKT)
-
-file_name = str(datetime.now(tz_JKT))[:19] + " batt_log.csv"
-
-# open the file in the write mode
-print("creating file...")
-f = open('./data/' + (file_name).replace(":", "_"), 'w', newline='')
-
-print("file created with name " + file_name + " at ./data folder")
-# create the csv writer
-writer = csv.writer(f)
-
-#######################################################################
 
 # wait at least 2 seconds with Analog Discovery for the offset to stabilize, before the first reading after device open or offset/range change
 time.sleep(2)
