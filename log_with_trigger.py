@@ -19,6 +19,7 @@ import pytz
 # import numpy
 
 level_trigger_choosed = 0
+last_state = 0
 
 if sys.platform.startswith("win"):
     dwf = cdll.dwf
@@ -50,6 +51,8 @@ if slopetype > 2 or slopetype < 0:
     print("Invalid Value, Exit")
     sys.exit(1)
 
+
+
 level_trigger_choosed = round(level_trigger_choosed, 2)
 
 print("Trigger level selcted: " + str(level_trigger_choosed) + "V")
@@ -77,6 +80,26 @@ def power_off_device():
     dwf.FDwfAnalogOutConfigure(hdwf, c_int(0), c_bool(False))
     dwf.FDwfDeviceCloseAll()
 
+def start_logging():
+    data_array = []
+    meas_time = datetime.now(tz_JKT).strftime("%H:%M:%S")
+    data_array.append(f"{meas_time}")
+    
+    dwf.FDwfAnalogInStatus(hdwf, c_int(1), byref(sts))
+    dwf.FDwfAnalogInStatusSamplesValid(hdwf, byref(cValid))
+    
+    for channel in range(2):
+        dwf.FDwfAnalogInStatusData(hdwf, channel, byref(rgdSamples), nSamples) # get value each channel
+        
+        dc = sum(rgdSamples)/len(rgdSamples)
+        dc = round(dc, 2)
+
+        print("Acq ch" + str(channel) + " at "+str(meas_time)+" average: "+ str(dc) +"V")
+        # break
+        data_array.append(f"{dc}")
+
+    writer.writerow(data_array)
+
 if hdwf.value == hdwfNone.value:
     szError = create_string_buffer(512)
     dwf.FDwfGetLastErrorMsg(szError);
@@ -96,24 +119,32 @@ dwf.FDwfAnalogOutConfigure(hdwf, c_int(0), c_bool(True))
 
 #set up acquisition
 dwf.FDwfAnalogInFrequencySet(hdwf, c_double(nSamples/secLog))
-dwf.FDwfAnalogInBufferSizeSet(hdwf, c_int(nSamples)) 
+dwf.FDwfAnalogInBufferSizeSet(hdwf, c_int(nSamples))
+
+#channel 0
 dwf.FDwfAnalogInChannelEnableSet(hdwf, c_int(0), c_bool(True))
-# dwf.FDwfAnalogInAcquisitionModeSet(hdwf, c_int(1)) #acqmodeScanShift
 dwf.FDwfAnalogInChannelRangeSet(hdwf, c_int(0), c_double(5))
 dwf.FDwfAnalogInChannelAttenuationSet(hdwf, c_int(0), c_double(10))
 
+#channel 1
+dwf.FDwfAnalogInChannelEnableSet(hdwf, c_int(1), c_bool(True))
+dwf.FDwfAnalogInChannelRangeSet(hdwf, c_int(1), c_double(5))
+dwf.FDwfAnalogInChannelAttenuationSet(hdwf, c_int(1), c_double(10))
+
+######## Use the Analog In Trigger #################
+dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcDetectorAnalogIn) #one of the analog in channels
+
+########### or use trigger from other instruments or external trigger #############
+#dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcExternal1) 
+
 #set up tridwfgger
 dwf.FDwfAnalogInTriggerAutoTimeoutSet(hdwf, c_double(0)) #disable auto trigger
-dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcDetectorAnalogIn) #one of the analog in channels
 dwf.FDwfAnalogInTriggerTypeSet(hdwf, trigtypeEdge)
 dwf.FDwfAnalogInTriggerChannelSet(hdwf, c_int(0)) # first channel
-dwf.FDwfAnalogInTriggerLevelSet(hdwf, c_double(level_trigger_choosed))
-# dwf.FDwfAnalogInTriggerConditionSet(hdwf, DwfTriggerSlopeRise) 
-dwf.FDwfAnalogInTriggerConditionSet(hdwf, c_int(slopetype)) 
 
-#or use trigger from other instruments or external trigger
-#dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigsrcExternal1) 
-#dwf.FDwfAnalogInTriggerConditionSet(hdwf, DwfTriggerSlopeEither) 
+dwf.FDwfAnalogInTriggerLevelSet(hdwf, c_double(level_trigger_choosed))
+dwf.FDwfAnalogInTriggerConditionSet(hdwf, c_int(slopetype))
+# dwf.FDwfAnalogInTriggerConditionSet(hdwf, DwfTriggerSlopeEither) 
 
 tz_JKT = pytz.timezone('Asia/Jakarta')
 
@@ -142,33 +173,22 @@ while True:
             dwf.FDwfAnalogInStatus(hdwf, c_int(1), byref(sts))
 
             if sts.value == DwfStateDone.value:
+                # dwf.FDwfAnalogInTriggerAutoTimeoutSet(hdwf, c_double(0.001))
+                # dwf.FDwfAnalogInAcquisitionModeSet(hdwf, c_int(1)) #acqmodeScanShift
                 break
-            time.sleep(0.5)
+            # continue
+            time.sleep(0.001)
         
-        dwf.FDwfAnalogInStatusData(hdwf, 0, byref(rgdSamples), nSamples) # get channel 1 data
-        #dwf.FDwfAnalogInStatusData(hdwf, 1, rgdSamples, 8192) # get channel 2 data
+        start_logging()
         
-        dc = sum(rgdSamples)/len(rgdSamples)
-        dc = round(dc, 2)
-
-        # if dc <= level_trigger_choosed:
-        #     dwf.FDwfAnalogOutConfigure(hdwf, c_int(0), c_bool(False))
-        #     time.sleep(2)
-        #     dwf.FDwfAnalogOutConfigure(hdwf, c_int(0), c_bool(True))
-
-        meas_time = datetime.now(tz_JKT).strftime("%H:%M:%S")
-
-        data_array = [meas_time, dc]
-
-        writer.writerow(data_array)
-
-        print("Acq at "+str(meas_time)+" average: "+ str(dc) +"V")
 
     except KeyboardInterrupt:
         break
+        # pass
 
     except dwfercInvalidParameter0:
         break
+        # pass
 
 power_off_device()
 
