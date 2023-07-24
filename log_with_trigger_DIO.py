@@ -169,7 +169,10 @@ print("Starting repeated acquisitions")
 dwf.FDwfAnalogInConfigure(hdwf, c_bool(False), c_bool(True))
 
 # enable output/mask on 8 LSB IO pins, from DIO 0 to 7
-dwf.FDwfDigitalIOOutputEnableSet(hdwf, c_int(pin_masking_bit))
+dwf.FDwfDigitalIOOutputEnableSet(hdwf, c_int(0xFF))
+
+# set value on enabled IO pins
+dwf.FDwfDigitalIOOutputSet(hdwf, c_int(0x0))
 
 while True:
     try:
@@ -191,7 +194,8 @@ while True:
                 # start logging if pin input is low
                 if dwRead.value & pin_masking_bit == 0:
                     break
-
+        
+        # print("Digital IO Pins: ", bin(dwRead.value)[2:].zfill(16))
         start_logging()
         
     except KeyboardInterrupt:
