@@ -82,7 +82,7 @@ def power_off_device():
 
 def start_logging():
     data_array = []
-    meas_time = datetime.now(tz_JKT).strftime("%H:%M:%S")
+    meas_time = datetime.now(tz_JKT).strftime("%y/%m/%d %H:%M:%S")
     data_array.append(f"{meas_time}")
     
     dwf.FDwfAnalogInStatus(hdwf, c_int(1), byref(sts))
@@ -102,7 +102,7 @@ def start_logging():
 
 if hdwf.value == hdwfNone.value:
     szError = create_string_buffer(512)
-    dwf.FDwfGetLastErrorMsg(szError);
+    dwf.FDwfGetLastErrorMsg(szError)
     print("failed to open device\n"+str(szError.value))
     quit()
 
