@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
-pytz = "*"
-matplotlib = "*"
-termcolor = "*"
+numpy = "==1.26.4"
+pytz = "==2024.1"
+matplotlib = "==3.8.4"
+termcolor = "==2.3.0"
 
 [dev-packages]
 
